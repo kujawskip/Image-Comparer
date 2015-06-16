@@ -264,10 +264,26 @@ namespace SimilarityFinder
         }
 
         /// <summary>
+        /// Generate histogram representing statistical values of difference between two input histograms
+        /// </summary>
+        /// <param name="h1">Input histogram</param>
+        /// <param name="h2">Input histogram</param>
+        /// <returns>Histogram with statistical data concerning input histograms' abs difference</returns>
+        private Histogram CalculateDifferenceHistogram(Histogram h1, Histogram h2)
+        {
+            int[] diffHist = new int[h1.Values.Length];
+            for (int i = 0; i < h1.Values.Length; i++)
+            {
+                diffHist[i] = Math.Abs(h1.Values[i] - h2.Values[i]);
+            }
+            return new Histogram(diffHist);
+        }
+
+        /// <summary>
         /// Compare two histograms, using modulo distance.
         /// </summary>
-        /// <param name="im1">Image to be compared</param>
-        /// <param name="im2">Image to be compared</param>
+        /// <param name="h1">Histogram to be compared</param>
+        /// <param name="h2">Histogram to be compared</param>
         /// <returns>Similarity from 0.0 to 1.0</returns>
         private double CompareHistograms(Histogram h1, Histogram h2)
         {
@@ -544,11 +560,13 @@ namespace SimilarityFinder
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 ImageLockMode.ReadWrite, bitmap.PixelFormat);
 
-            BlobCounter blobCounter = new BlobCounter();
+            BlobCounter blobCounter = new BlobCounter
+            {
+                FilterBlobs = true,
+                MinHeight = bitmap.Height/50,
+                MinWidth = bitmap.Width/50
+            };
 
-            blobCounter.FilterBlobs = true;
-            blobCounter.MinHeight = bitmap.Height / 50;
-            blobCounter.MinWidth = bitmap.Width / 50;
 
             blobCounter.ProcessImage(bitmapData);
             Blob[] blobs = blobCounter.GetObjectsInformation();
@@ -679,12 +697,14 @@ namespace SimilarityFinder
             // step 1 - turn background to black
             if (prepareBitmap)
             {
-                ColorFiltering colorFilter = new ColorFiltering();
+                ColorFiltering colorFilter = new ColorFiltering
+                {
+                    Red = new IntRange(0, 64),
+                    Green = new IntRange(0, 64),
+                    Blue = new IntRange(0, 64),
+                    FillOutsideRange = false
+                };
 
-                colorFilter.Red = new IntRange(0, 64);
-                colorFilter.Green = new IntRange(0, 64);
-                colorFilter.Blue = new IntRange(0, 64);
-                colorFilter.FillOutsideRange = false;
 
                 colorFilter.ApplyInPlace(bitmapData);
             }

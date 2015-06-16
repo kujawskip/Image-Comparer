@@ -26,9 +26,12 @@ namespace SimilarityFinder
         private static int SQUARES = 10;
         private static double POINT_EPS = 2;
         ImageData image1, image2;
-        private double _geometricSimilarity;
-        private double _histogramSimilarity;
-        private double _smoothnessSimilarity;
+        private double _geometricSimilarity = Double.NaN;
+        private double _histogramSimilarityStaticColors = Double.NaN;
+        private double _histogramSimilarityColorOffset = Double.NaN;
+        private double _smoothnessSimilarity = Double.NaN;
+        private double _histogramSimilarityColorOffsetSubimg = Double.NaN;
+        private double _histogramSimilarityStaticColorstSubimg = Double.NaN;
 
         public int Threshold1 { get; set; }
 
@@ -42,11 +45,19 @@ namespace SimilarityFinder
             }
         }
 
-        public double HistogramSimilarity
+        public double HistogramSimilarityStaticColors
         {
             get
             {
-                return _histogramSimilarity;
+                return _histogramSimilarityStaticColors;
+            }
+        }
+
+        public double HistogramSimilarityColorOffset
+        {
+            get
+            {
+                return _histogramSimilarityColorOffset;
             }
         }
 
@@ -56,6 +67,16 @@ namespace SimilarityFinder
             {
                 return _smoothnessSimilarity;
             }
+        }
+
+        public double HistogramSimilarityStaticColorsSubimg
+        {
+            get { return _histogramSimilarityColorOffsetSubimg; }
+        }
+
+        public double HistogramSimilarityColorOffsetSubimg
+        {
+            get { return _histogramSimilarityStaticColorstSubimg; }
         }
 
         /// <summary>
@@ -75,7 +96,10 @@ namespace SimilarityFinder
         public void Compare()
         {
             Adjust();
-            _histogramSimilarity  = CompareHistograms(image1.Image, image2.Image);
+            _histogramSimilarityStaticColors = CompareHistograms(image1.Image, image2.Image);
+            _histogramSimilarityColorOffset = CompareHistogramsWithMinimalMeanSearch(image1.Image, image2.Image);
+            _histogramSimilarityColorOffsetSubimg = CompareHistogramsSubimages(image1.Image, image2.Image, true);
+            _histogramSimilarityStaticColorstSubimg = CompareHistogramsSubimages(image1.Image, image2.Image);
             _smoothnessSimilarity = CompareSmoothness(image1.Image, image2.Image);
             _geometricSimilarity = DetectObjects(image1, image2);
             image1.RestoreOriginal();
@@ -200,13 +224,54 @@ namespace SimilarityFinder
             return similarity;
         }
 
+        private double CompareHistograms(Bitmap im1, Bitmap im2)
+        {
+            Grayscale filter = Grayscale.CommonAlgorithms.BT709;
+            Bitmap im1Gray = filter.Apply(im1),
+                im2Gray = filter.Apply(im2);
+            int max = 10;
+            int width = im1.Width / max,
+                height = im1.Height / max;
+            ImageStatistics stats1 = new ImageStatistics(im1);
+            ImageStatistics stats2 = new ImageStatistics(im2);
+            ImageStatistics stats1Gray = new ImageStatistics(im1Gray);
+            ImageStatistics stats2Gray = new ImageStatistics(im2Gray);
+            double diff = 3 * CalculateDifferenceHistogram(stats1.Red, stats2.Red).Mean;
+            diff += 3 * CalculateDifferenceHistogram(stats1.Green, stats2.Green).Mean;
+            diff += 3 * CalculateDifferenceHistogram(stats1.Blue, stats2.Blue).Mean;
+            diff += CalculateDifferenceHistogram(stats1Gray.Gray, stats2Gray.Gray).Mean;
+            diff /= 10;
+            return 100*(256.0 - diff)/(256.0*max*max);
+        }
+
+        private double CompareHistogramsWithMinimalMeanSearch(Bitmap im1, Bitmap im2)
+        {
+            Grayscale filter = Grayscale.CommonAlgorithms.BT709;
+            Bitmap im1Gray = filter.Apply(im1),
+                im2Gray = filter.Apply(im2);
+            int max = 10;
+            int width = im1.Width/max,
+                height = im1.Height/max;
+            ImageStatistics stats1 = new ImageStatistics(im1);
+            ImageStatistics stats2 = new ImageStatistics(im2);
+            ImageStatistics stats1Gray = new ImageStatistics(im1Gray);
+            ImageStatistics stats2Gray = new ImageStatistics(im2Gray);
+            double diff = 3*CalculateDifferenceHistogramWithMinimalMeanOffset(stats1.Red, stats2.Red).Mean;
+            diff += 3*CalculateDifferenceHistogramWithMinimalMeanOffset(stats1.Green, stats2.Green).Mean;
+            diff += 3*CalculateDifferenceHistogramWithMinimalMeanOffset(stats1.Blue, stats2.Blue).Mean;
+            diff += CalculateDifferenceHistogramWithMinimalMeanOffset(stats1Gray.Gray, stats2Gray.Gray).Mean;
+            diff /= 10;
+
+            return 100*(256.0 - diff)/(256.0*max*max);
+        }
+
         /// <summary>
         /// Compare histograms of two images, using modulo distance.
         /// </summary>
         /// <param name="im1">Image to be compared</param>
         /// <param name="im2">Image to be compared</param>
         /// <returns>Similarity from 0.0 to 1.0</returns>
-        private double CompareHistograms(Bitmap im1, Bitmap im2)
+        private double CompareHistogramsSubimages(Bitmap im1, Bitmap im2, bool colorSwitchSensitive=false)
         {
             Grayscale filter = Grayscale.CommonAlgorithms.BT709;
             Bitmap im1Gray = filter.Apply(im1),
@@ -215,6 +280,7 @@ namespace SimilarityFinder
             int width = im1.Width / max,
                 height = im1.Height / max;
             double similarity = 0;
+            int count = 0;
             for (int i = 0; i < max; i++)
             {
                 for (int j = 0; j < max; j++)
@@ -225,30 +291,31 @@ namespace SimilarityFinder
                     {
                         continue;
                     }
+                    count ++;
                     Bitmap i1 = im1.Clone(rectangle, im1.PixelFormat),
-                        i2 = im2.Clone(rectangle, im2.PixelFormat),
-                        i1Gray = im1Gray.Clone(rectangle, im1Gray.PixelFormat),
-                        i2Gray = im2Gray.Clone(rectangle, im2Gray.PixelFormat);
-                    ImageStatistics stats1 = new ImageStatistics(i1);
-                    ImageStatistics stats2 = new ImageStatistics(i2);
-                    ImageStatistics stats1Gray = new ImageStatistics(i1Gray);
-                    ImageStatistics stats2Gray = new ImageStatistics(i2Gray);
-                    double diff = CompareHistograms(stats1.Red, stats2.Red);
-                    diff = diff * CompareHistograms(stats1.Blue, stats2.Blue);
-                    diff = diff * CompareHistograms(stats1.Green, stats2.Green);
-                    diff = diff * CompareHistograms(stats1Gray.Gray, stats2Gray.Gray);
-                    //ImageStatisticsHSL statss1 = new ImageStatisticsHSL(i1);
-                    //ImageStatisticsHSL statss2 = new ImageStatisticsHSL(i2);
-                    //double diff = CompareHistograms(statss1.Luminance, statss2.Luminance, statss1.PixelsCount);
-                    //diff = diff * CompareHistograms(statss1.Saturation, statss1.Saturation, statss1.PixelsCount);
-                    i1.Dispose();
-                    i2.Dispose();
-                    i1Gray.Dispose();
-                    i2Gray.Dispose();
-                    similarity += diff;
+                        i2 = im2.Clone(rectangle, im2.PixelFormat);
+                    //ImageStatistics stats1 = new ImageStatistics(i1);
+                    //ImageStatistics stats2 = new ImageStatistics(i2);
+                    //ImageStatistics stats1Gray = new ImageStatistics(i1Gray);
+                    //ImageStatistics stats2Gray = new ImageStatistics(i2Gray);
+                    //double diff = 2*CompareHistogramsWithMinimalMeanSearch(stats1.Red, stats2.Red);
+                    //diff = diff + 2*CompareHistogramsWithMinimalMeanSearch(stats1.Blue, stats2.Blue);
+                    //diff = diff + 2*CompareHistogramsWithMinimalMeanSearch(stats1.Green, stats2.Green);
+                    //diff = diff + CompareHistogramsWithMinimalMeanSearch(stats1Gray.Gray, stats2Gray.Gray);
+                    //diff /= 7;
+                    ////ImageStatisticsHSL statss1 = new ImageStatisticsHSL(i1);
+                    ////ImageStatisticsHSL statss2 = new ImageStatisticsHSL(i2);
+                    ////double diff = CompareHistogramsWithMinimalMeanSearch(statss1.Luminance, statss2.Luminance, statss1.PixelsCount);
+                    ////diff = diff * CompareHistogramsWithMinimalMeanSearch(statss1.Saturation, statss1.Saturation, statss1.PixelsCount);
+                    //i1.Dispose();
+                    //i2.Dispose();
+                    //i1Gray.Dispose();
+                    //i2Gray.Dispose();
+                    //similarity += diff;
+                    similarity +=colorSwitchSensitive? CompareHistogramsWithMinimalMeanSearch(i1, i2) : CompareHistograms(i1, i2);
                 }
             }
-            return similarity / max / max;
+            return similarity/count;
         }
 
         /// <summary>
@@ -257,7 +324,7 @@ namespace SimilarityFinder
         /// <param name="im1">Image to be compared</param>
         /// <param name="im2">Image to be compared</param>
         /// <returns>Similarity from 0.0 to 1.0</returns>
-        private double CompareHistograms(ContinuousHistogram h1, ContinuousHistogram h2, int pixelCount)
+        private double CompareHistogramsWithMinimalMeanSearch(ContinuousHistogram h1, ContinuousHistogram h2, int pixelCount)
         {
             int distance = DistanceModulo(h1, h2);
             return Math.Max(0, 1 - (distance / COLORSCALE) / (pixelCount + 0.0));
@@ -279,13 +346,30 @@ namespace SimilarityFinder
             return new Histogram(diffHist);
         }
 
+
+        private Histogram CalculateDifferenceHistogramWithMinimalMeanOffset(Histogram h1, Histogram h2)
+        {
+            var  minHistogram = CalculateDifferenceHistogram(h1, h2);
+            var offsetHist = h1.Values.ToList();
+            for (int i = 1; i < 256; i++)
+            {
+                var first = offsetHist.First();
+                offsetHist.RemoveAt(0);
+                offsetHist.Add(first);
+                var current = new Histogram(offsetHist.ToArray());
+                var diff = CalculateDifferenceHistogram(current, h2);
+                if (diff.Mean < minHistogram.Mean) minHistogram = diff;
+            }
+            return minHistogram;
+        }
+
         /// <summary>
         /// Compare two histograms, using modulo distance.
         /// </summary>
         /// <param name="h1">Histogram to be compared</param>
         /// <param name="h2">Histogram to be compared</param>
         /// <returns>Similarity from 0.0 to 1.0</returns>
-        private double CompareHistograms(Histogram h1, Histogram h2)
+        private double CompareHistogramsWithMinimalMeanSearch(Histogram h1, Histogram h2)
         {
             //double diffMax = Math.Abs(h1.Max - h2.Max);
             //double diffMin = Math.Abs(h1.Min - h2.Min);

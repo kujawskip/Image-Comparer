@@ -77,7 +77,11 @@ namespace SimilarityFinder
             comparer.Compare();
             geometricSimilarityLabel.Text = String.Format("Geometrical similarity: {0}%", comparer.GeometricSimilarity * 100);
             smoothnessSimilarityLabel.Text = String.Format("Smoothness similarity: {0}%", comparer.SmoothnessSimilarity * 100);
-            colorSimilarityLabel.Text = String.Format("Color similarity: {0}%", comparer.HistogramSimilarity * 100);
+            colorSimilarityStaticLabel.Text = String.Format("Color similarity: {0}%", comparer.HistogramSimilarityStaticColors * 100);
+            colorSimilarityOfssetLabel.Text = String.Format("Color switch det. similarity: {0}%", comparer.HistogramSimilarityColorOffset * 100);
+            colorSimilarityOfssetSubimgLabel.Text = String.Format("Subimg color switch det. sim. : {0}%",
+                comparer.HistogramSimilarityColorOffsetSubimg * 100);
+            colorSimilarityStaticSubimgLabel.Text = String.Format("Subimg. color sim. : {0}%", comparer.HistogramSimilarityStaticColorsSubimg * 100);
             firstPicturePanel.BackgroundImage = firstImage.Image;
             secondPicturePanel.BackgroundImage = secondImage.Image;
 

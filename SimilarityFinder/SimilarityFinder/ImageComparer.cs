@@ -26,9 +26,9 @@ namespace SimilarityFinder
         private static int SQUARES = 10;
         private static double POINT_EPS = 2;
         ImageData image1, image2;
-        private double geometricSimilarity;
-        private double histogramSimilarity;
-        private double smoothnessSimilarity;
+        private double _geometricSimilarity;
+        private double _histogramSimilarity;
+        private double _smoothnessSimilarity;
 
         public int Threshold1 { get; set; }
 
@@ -38,7 +38,7 @@ namespace SimilarityFinder
         {
             get
             {
-                return geometricSimilarity;
+                return _geometricSimilarity;
             }
         }
 
@@ -46,7 +46,7 @@ namespace SimilarityFinder
         {
             get
             {
-                return histogramSimilarity;
+                return _histogramSimilarity;
             }
         }
 
@@ -54,7 +54,7 @@ namespace SimilarityFinder
         {
             get
             {
-                return smoothnessSimilarity;
+                return _smoothnessSimilarity;
             }
         }
 
@@ -75,9 +75,9 @@ namespace SimilarityFinder
         public void Compare()
         {
             Adjust();
-            histogramSimilarity  = CompareHistograms(image1.Image, image2.Image);
-            smoothnessSimilarity = CompareSmoothness(image1.Image, image2.Image);
-            geometricSimilarity = DetectObjects(image1, image2);
+            _histogramSimilarity  = CompareHistograms(image1.Image, image2.Image);
+            _smoothnessSimilarity = CompareSmoothness(image1.Image, image2.Image);
+            _geometricSimilarity = DetectObjects(image1, image2);
             image1.RestoreOriginal();
             image2.RestoreOriginal();
             //DetsectEdges();
@@ -208,6 +208,9 @@ namespace SimilarityFinder
         /// <returns>Similarity from 0.0 to 1.0</returns>
         private double CompareHistograms(Bitmap im1, Bitmap im2)
         {
+            Grayscale filter = Grayscale.CommonAlgorithms.BT709;
+            Bitmap im1Gray = filter.Apply(im1),
+                   im2Gray = filter.Apply(im2);
             int max = 10;
             int width = im1.Width / max,
                 height = im1.Height / max;
@@ -223,18 +226,25 @@ namespace SimilarityFinder
                         continue;
                     }
                     Bitmap i1 = im1.Clone(rectangle, im1.PixelFormat),
-                        i2 = im2.Clone(rectangle, im2.PixelFormat);
+                        i2 = im2.Clone(rectangle, im2.PixelFormat),
+                        i1Gray = im1Gray.Clone(rectangle, im1Gray.PixelFormat),
+                        i2Gray = im2Gray.Clone(rectangle, im2Gray.PixelFormat);
                     ImageStatistics stats1 = new ImageStatistics(i1);
                     ImageStatistics stats2 = new ImageStatistics(i2);
+                    ImageStatistics stats1Gray = new ImageStatistics(i1Gray);
+                    ImageStatistics stats2Gray = new ImageStatistics(i2Gray);
                     double diff = CompareHistograms(stats1.Red, stats2.Red);
                     diff = diff * CompareHistograms(stats1.Blue, stats2.Blue);
                     diff = diff * CompareHistograms(stats1.Green, stats2.Green);
+                    diff = diff * CompareHistograms(stats1Gray.Gray, stats2Gray.Gray);
                     //ImageStatisticsHSL statss1 = new ImageStatisticsHSL(i1);
                     //ImageStatisticsHSL statss2 = new ImageStatisticsHSL(i2);
                     //double diff = CompareHistograms(statss1.Luminance, statss2.Luminance, statss1.PixelsCount);
                     //diff = diff * CompareHistograms(statss1.Saturation, statss1.Saturation, statss1.PixelsCount);
                     i1.Dispose();
                     i2.Dispose();
+                    i1Gray.Dispose();
+                    i2Gray.Dispose();
                     similarity += diff;
                 }
             }

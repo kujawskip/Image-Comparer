@@ -13,7 +13,7 @@ namespace SimilarityFinder
     public partial class Form1 : Form
     {
         ImageData firstImage, secondImage;
-        private int firstThreshold, secondThreshold;
+        private int firstThreshold = 128, secondThreshold = 128;
 
         public Form1()
         {

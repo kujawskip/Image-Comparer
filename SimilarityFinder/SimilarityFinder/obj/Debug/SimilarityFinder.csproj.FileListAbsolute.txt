@@ -23,3 +23,19 @@ C:\Users\Grz\Documents\Visual Studio 2012\Projects\SimilarityFinder\SimilarityFi
 C:\Users\Grz\Documents\Visual Studio 2012\Projects\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.ColorSlider.resources
 C:\Users\Grz\Documents\Visual Studio 2012\Projects\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.FilterPreview.resources
 C:\Users\Grz\Documents\Visual Studio 2012\Projects\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.ThresholdForm.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\SimilarityFinder.exe.config
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.exe
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.pdb
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\SimilarityFinder.exe
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\SimilarityFinder.pdb
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\AForge.dll
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\AForge.Imaging.dll
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\AForge.Math.dll
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\bin\Debug\WeifenLuo.WinFormsUI.dll
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.ColorSlider.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.FilterPreview.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.Form1.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.Properties.Resources.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.ThresholdForm.resources
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.csproj.GenerateResource.Cache
+C:\PPO\Image-Comparer\SimilarityFinder\SimilarityFinder\obj\Debug\SimilarityFinder.csprojResolveAssemblyReference.cache
